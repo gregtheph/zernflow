@@ -30,8 +30,9 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/dashboard");
+    // 💡 تغییر کلیدی: اول ریفرش می‌کنیم تا کوکی ست شود، سپس مستقیم به مقصد نهایی می‌رویم
     router.refresh();
+    router.push("/dashboard/flows");
   }
 
   async function handleGitHubLogin() {
@@ -68,6 +69,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email" // 💡 رفع هشدار مرورگر
               className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               placeholder="you@example.com"
             />
@@ -86,6 +88,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="current-password" // 💡 رفع هشدار مرورگر
               className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               placeholder="Your password"
             />
