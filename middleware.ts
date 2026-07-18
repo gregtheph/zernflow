@@ -17,15 +17,9 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
+          // استفاده مستقیم از متد کپی کوکی بدون آبجکت‌های دست‌نویس اضافه
           cookiesToSet.forEach(({ name, value, options }) => {
-            request.cookies.set({
-              name,
-              value,
-              ...options,
-              sameSite: 'lax',
-              secure: true,
-              path: '/',
-            })
+            request.cookies.set(name, value)
           })
           response = NextResponse.next({
             request: {
@@ -33,35 +27,22 @@ export async function middleware(request: NextRequest) {
             },
           })
           cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set({
-              name,
-              value,
-              ...options,
-              sameSite: 'lax',
-              secure: true,
-              path: '/',
-            })
+            response.cookies.set(name, value)
           })
         },
       },
     }
   )
 
-  // استفاده از getUser که همیشه دیتای زنده و واقعی را از سرور سوپابیس می‌گیرد
   const { data: { user } } = await supabase.auth.getUser()
   const url = request.nextUrl.clone()
 
-  // 1. اگر کاربر لاگین نکرده و می‌خواهد به صفحات داشبورد برود
+  // مدیریت روت‌ها برای جلوگیری از لوپ
   if (!user && url.pathname.startsWith('/dashboard')) {
-    // برای اینکه مطمئن شویم کاربر بعد از لاگین مستقیم به همان صفحه‌ای برود که می‌خواست
-    const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = '/login'
-    redirectUrl.searchParams.set('next', url.pathname)
-    return NextResponse.redirect(redirectUrl)
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
   }
 
-  // 2. اگر کاربر لاگین کرده و می‌خواهد به صفحات عمومی یا لاگین برود
-  // 💡 نکته مهم: فقط اگر دقیقاً روی /login یا / یا /register بود برود به /dashboard/flows تا لوپ ایجاد نشود
   if (user && (url.pathname === '/login' || url.pathname === '/register' || url.pathname === '/')) {
     url.pathname = '/dashboard/flows'
     return NextResponse.redirect(url)
