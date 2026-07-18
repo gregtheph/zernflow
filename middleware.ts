@@ -1,12 +1,12 @@
-import { createServerClient } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
+import { NextResponse, type NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request: {
       headers: request.headers,
     },
-  })
+  });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,49 +14,46 @@ export async function middleware(request: NextRequest) {
     {
       cookies: {
         getAll() {
-          return request.cookies.getAll()
+          return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          // ۱. روی رکوئست فقط نام و مقدار ست می‌شود (تایپ RequestCookie)
-          cookiesToSet.forEach(({ name, value }) => {
-            request.cookies.set(name, value)
-          })
-          
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
-          
-          // ۲. روی ریسپانس کل آپشن‌ها برای مرورگر فرستاده می‌شود
           cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options)
-          })
+            request.cookies.set({ name, value, ...options });
+            response.cookies.set({ name, value, ...options });
+          });
         },
       },
     }
-  )
+  );
 
-  const { data: { user } } = await supabase.auth.getUser()
-  const url = request.nextUrl.clone()
+  const { data: { user } } = await supabase.auth.getUser();
+  const url = request.nextUrl.clone();
 
-  // اگر کاربر لاگین نکرده و می‌خواهد به صفحات داشبورد برود
-  if (!user && url.pathname.startsWith('/dashboard')) {
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+  // اگر کاربر لاگین نیست و می‌خواهد به داشبورد برود
+  if (!user && url.pathname.startsWith("/dashboard")) {
+    const redirectResponse = NextResponse.redirect(new URL("/login", request.url));
+    // کپی کردن کوکی‌های ست شده به پاسخ ریدایرکت
+    response.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value);
+    });
+    return redirectResponse;
   }
 
-  // اگر کاربر لاگین کرده و می‌خواهد به صفحات عمومی یا لاگین برود
-  if (user && (url.pathname === '/login' || url.pathname === '/register' || url.pathname === '/')) {
-    url.pathname = '/dashboard/flows'
-    return NextResponse.redirect(url)
+  // اگر کاربر لاگین است و می‌خواهد به صفحات عمومی برود
+  if (user && (url.pathname === "/login" || url.pathname === "/register" || url.pathname === "/")) {
+    const redirectResponse = NextResponse.redirect(new URL("/dashboard/flows", request.url));
+    // کپی کردن کوکی‌های ست شده به پاسخ ریدایرکت
+    response.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value);
+    });
+    return redirectResponse;
   }
 
-  return response
+  return response;
 }
 
 export const config = {
   matcher: [
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
-}
+};
