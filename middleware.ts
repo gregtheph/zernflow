@@ -17,18 +17,9 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          // 💡 روش درست انتقال آپشن‌ها در نسخه جدید نکست‌جی‌اس بدون ارور بیلد:
-          cookiesToSet.forEach(({ name, value, options }) => {
-            request.cookies.set({
-              name,
-              value,
-              path: options.path ?? '/',
-              domain: options.domain,
-              maxAge: options.maxAge,
-              expires: options.expires,
-              secure: true,
-              sameSite: 'lax'
-            })
+          // ۱. روی رکوئست فقط نام و مقدار ست می‌شود (تایپ RequestCookie)
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value)
           })
           
           response = NextResponse.next({
@@ -37,17 +28,9 @@ export async function middleware(request: NextRequest) {
             },
           })
           
+          // ۲. روی ریسپانس کل آپشن‌ها برای مرورگر فرستاده می‌شود
           cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set({
-              name,
-              value,
-              path: options.path ?? '/',
-              domain: options.domain,
-              maxAge: options.maxAge,
-              expires: options.expires,
-              secure: true,
-              sameSite: 'lax'
-            })
+            response.cookies.set(name, value, options)
           })
         },
       },
@@ -57,13 +40,13 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const url = request.nextUrl.clone()
 
-  // ۱. اگر کاربر لاگین نکرده و می‌خواهد به صفحات داشبورد برود
+  // اگر کاربر لاگین نکرده و می‌خواهد به صفحات داشبورد برود
   if (!user && url.pathname.startsWith('/dashboard')) {
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  // ۲. اگر کاربر لاگین کرده و می‌خواهد به صفحات عمومی یا لاگین برود
+  // اگر کاربر لاگین کرده و می‌خواهد به صفحات عمومی یا لاگین برود
   if (user && (url.pathname === '/login' || url.pathname === '/register' || url.pathname === '/')) {
     url.pathname = '/dashboard/flows'
     return NextResponse.redirect(url)
