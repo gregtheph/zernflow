@@ -17,8 +17,7 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          // استفاده مستقیم از متد کپی کوکی بدون آبجکت‌های دست‌نویس اضافه
-          cookiesToSet.forEach(({ name, value, options }) => {
+          cookiesToSet.forEach(({ name, value }) => {
             request.cookies.set(name, value)
           })
           response = NextResponse.next({
@@ -26,7 +25,7 @@ export async function middleware(request: NextRequest) {
               headers: request.headers,
             },
           })
-          cookiesToSet.forEach(({ name, value, options }) => {
+          cookiesToSet.forEach(({ name, value }) => {
             response.cookies.set(name, value)
           })
         },
@@ -37,12 +36,13 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const url = request.nextUrl.clone()
 
-  // مدیریت روت‌ها برای جلوگیری از لوپ
+  // اگر کاربر لاگین نیست و می‌خواهد به داشبورد برود -> هدایت به لاگین
   if (!user && url.pathname.startsWith('/dashboard')) {
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
+  // اگر کاربر لاگین هست و می‌خواهد به صفحات عمومی برود -> هدایت مستقیم به Flows
   if (user && (url.pathname === '/login' || url.pathname === '/register' || url.pathname === '/')) {
     url.pathname = '/dashboard/flows'
     return NextResponse.redirect(url)
