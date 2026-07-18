@@ -4,8 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const rawNext = searchParams.get("next") ?? "/dashboard";
-  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/dashboard";
+  
+  // 💡 تغییر کلیدی: مقصد پیش‌فرض را مستقیم روی /dashboard/flows می‌گذاریم
+  const rawNext = searchParams.get("next") ?? "/dashboard/flows";
+  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/dashboard/flows";
 
   if (code) {
     const supabase = await createClient();
