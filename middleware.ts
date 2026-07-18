@@ -7,11 +7,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * فقط روی صفحاتی که نیاز به قفل و احراز هویت دارند (مثل داشبورد و تنظیمات) اجرا شود.
-     * صفحات عمومی، لاگین، استاتیک و عکس‌ها کاملاً نادیده گرفته می‌شوند.
-     */
-    "/dashboard/:path*",
-    "/api/protected/:path*", // اگر مسیر ای‌پیاآی قفل‌شده‌ای داری
-  ],
+ "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    ],
 };
